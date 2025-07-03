@@ -1,3 +1,6 @@
-.vscode
-**/*.o
-**/*.exe
+*.o
+/build/
+/build/*
+/build/bin/
+/build/bin/*
+.vscode/
