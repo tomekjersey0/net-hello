@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <thread>
 #include <mutex>
+#include <iterator>
 #include "GetError.hpp"
 
 void Server::Start()
@@ -14,10 +15,10 @@ void Server::Start()
         return;
     }
 
+    Listen();
+
     while (true)
     {
-        Listen();
-
         auto client = std::make_shared<ClientData>();
 
         SOCKET clientSock = Accept(client.get());
@@ -37,6 +38,16 @@ void Server::Start()
         std::thread t(&Server::handleConnection, this, client);
         t.detach();
     }
+}
+
+Server::Server()
+{
+    commandsList = {
+        {"LIST", "Print who is actively online"},
+        {"SELECT", "Send a request to Chat with SELECT username"},
+        {"QUIT", "Exit the current chat"},
+        {"HELP", "Show list of commands"}
+    };
 }
 
 Server::~Server()
@@ -77,6 +88,9 @@ SOCKET Server::Accept(ClientData *clientData)
         clientSocket = accept(sockfd, (sockaddr *)&clientData->client_addr, &client_len);
         if (clientSocket != INVALID_SOCKET)
         {
+            // init other no-val members
+            clientData->chattingWith = nullptr;
+            clientData->username = "";
             break; // success
         }
 
@@ -100,35 +114,125 @@ SOCKET Server::Accept(ClientData *clientData)
     return clientSocket;
 }
 
-void Server::handleConnection(std::shared_ptr<ClientData> clientData)
+bool Server::RecvFromClient(ClientData *_clientData, char *buffer, size_t buffer_size)
 {
-    SOCKET socket = clientData->socket;
-    Send(socket, "Welcome to Magic 8 Ball! Ask a question, and you will recieve an answer!\n");
-    while (true)
+    SOCKET socket = _clientData->socket;
+    int bytes = Recv(socket, buffer, buffer_size);
+    std::cout << "bytes: " << bytes << std::endl;
+    if (bytes < 0)
     {
-        char buffer[256];
-        int bytes = Recv(socket, buffer, sizeof(buffer));
-        if (bytes < 0)
+        return false;
+    }
+    else if (bytes == 0)
+    {
+        return false;
+    }
+    else
+    {
+        if (bytes == strlen(buffer))
         {
-            std::cout << GetError::getFullMessage(WSAGetLastError()) << std::endl;
-            break;
-        }
-        else if (bytes == 0)
-        {
-            std::cout << GetError::getFullMessage(WSAGetLastError()) << std::endl;
-            break;
+            buffer[bytes - 1] = '\0';
         }
         else
         {
-            if (bytes == sizeof(buffer))
-            {
-                buffer[bytes - 1] = '\0';
-            }
-            else
-            {
-                buffer[bytes] = '\0';
-            }
-            std::cout << buffer;
+            buffer[bytes] = '\0';
+        }
+        return true;
+    }
+}
+
+std::string Server::trim(const std::string& s) {
+    size_t start = s.find_first_not_of(" \r\n\t");
+    size_t end = s.find_last_not_of(" \r\n\t");
+    return (start == std::string::npos) ? "" : s.substr(start, end - start + 1);
+}
+
+bool Server::isCommand(std::string input)
+{
+    input = trim(input);
+    for (auto it = commandsList.begin(); it != commandsList.end(); ++it) {
+        if (input.rfind(it->name, 0) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Server::listUsers(std::shared_ptr<ClientData> client)
+{
+    for (auto it = clientData.begin(); it != clientData.end(); ++it)
+    {
+        size_t index = std::distance(clientData.begin(), it);
+        std::string out = "[" + std::to_string(index + 1) + "] " + it->get()->username + "\n";
+        Send(client->socket, out.c_str());
+    }
+}
+
+void Server::selectUser(std::shared_ptr<ClientData> client, const std::string &input)
+{
+}
+
+void Server::quitChat(std::shared_ptr<ClientData> client)
+{
+}
+
+void Server::helpCommands(std::shared_ptr<ClientData> client)
+{
+    std::string msg = "";
+    for (auto it = commandsList.begin(); it != commandsList.end(); ++it) {
+        msg += it->name + " - " + it->description + "\n";
+    }
+    Send(client->socket, msg.c_str());
+}
+
+void Server::handleCommand(std::shared_ptr<ClientData> client, const std::string &input)
+{
+    /* could add function pointers to the commands list, but really i think its
+     more clear to just keep adding these manually to both the commands list and 
+     here and write custom functions maybe?
+    */
+    if (input.rfind("LIST", 0) == 0)
+    {
+        listUsers(client);
+    }
+    else if (input.rfind("SELECT", 0) == 0)
+    {
+        selectUser(client, input);
+    }
+    else if (input.rfind("QUIT", 0) == 0)
+    {
+        quitChat(client);
+    }
+    else if (input.rfind("HELP", 0) == 0)
+    {
+        helpCommands(client);
+    }
+    else
+    {
+        Send(client->socket, "Unknown command\n");
+    }
+}
+
+void Server::handleConnection(std::shared_ptr<ClientData> _clientData)
+{
+    Send(_clientData->socket, "Welcome to EchoNet! Type HELP for a list of COMMANDS.\n");
+    while (true)
+    {
+        // input before for text from client
+        std::string buffer(256, '\0');
+        bool noError = RecvFromClient(_clientData.get(), &buffer[0], buffer.size());
+        if (!noError)
+        {
+            break;
+        }
+        if (isCommand(buffer))
+        {
+            std::cout << "yep command here" << std::endl;
+            handleCommand(_clientData, buffer);
+        }
+        else
+        {
+            std::cout << "NOO command.. " << buffer << std::endl;
         }
         /*
             Temp testing
@@ -139,7 +243,7 @@ void Server::handleConnection(std::shared_ptr<ClientData> clientData)
         DWORD time = timeGetTime();
         std::string msg = msgs[time % size_msgs];
         msg += "\n";
-        Send(socket, msg.c_str());
+        Send(_clientData->socket, msg.c_str());
     }
 
     // free socket, and remove itself from the main vector
@@ -147,9 +251,9 @@ void Server::handleConnection(std::shared_ptr<ClientData> clientData)
         std::lock_guard<std::mutex> lock(clientDataMutex);
         for (auto it = this->clientData.begin(); it != this->clientData.end(); ++it)
         {
-            if (*it == clientData)
+            if (*it == _clientData)
             {
-                closesocket(clientData->socket);
+                closesocket(_clientData->socket);
                 this->clientData.erase(it);
                 break;
             }

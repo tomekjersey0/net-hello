@@ -1,6 +1,7 @@
-#include "../include/SockAddr.hpp"
+#include "SockAddr.hpp"
 #include <cstring>
 #include <iostream>
+#include "GetError.hpp"
 
 SockAddr::SockAddr() : SockAddr(55555, "127.0.0.1") {}
 
@@ -22,17 +23,25 @@ int SockAddr::Send(SOCKET to, const char *msg)
     return send(to, msg, strlen(msg), 0);
 }
 
-int SockAddr::Recv(SOCKET socket, char* out, size_t buf_size)
+int SockAddr::Recv(SOCKET socket, char *out, size_t buf_size)
 {
     int bytes = recv(socket, out, buf_size, 0);
-    if (bytes == 0) {
-        std::cout << "Peer closed connection." << std::endl;
-    } else if (bytes < 0) {
-        std::cout << "Error occured." << std::endl;
-    } else {
-        if (bytes < buf_size) {
+    if (bytes == 0)
+    {
+        std::cout << GetError::getFullMessage(WSAGetLastError()) << std::endl;
+    }
+    else if (bytes < 0)
+    {
+        std::cout << GetError::getFullMessage(WSAGetLastError()) << std::endl;
+    }
+    else
+    {
+        if (bytes < buf_size)
+        {
             out[bytes] = '\0';
-        } else {
+        }
+        else
+        {
             out[buf_size - 1] = '\0';
         }
     }

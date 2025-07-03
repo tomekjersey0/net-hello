@@ -73,6 +73,11 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "strstream": "cpp",
+        "complex": "cpp",
+        "set": "cpp",
+        "fstream": "cpp",
+        "typeindex": "cpp"
     }
 }

@@ -17,7 +17,8 @@ Client::Client()
         std::cout << msg;
         std::string message;
         std::getline(std::cin, message);
-        message += "\n";
+        if (message.empty()) continue;
+        message += '\n';
         Send(sockfd, message.c_str());
     }
 }
