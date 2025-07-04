@@ -46,7 +46,7 @@ Server::Server()
         {"LIST", "Print who is actively online"},
         {"SELECT", "Send a request to Chat with SELECT username"},
         {"QUIT", "Exit the current chat"},
-        {"HELP", "Show list of commands"}
+        {"HELP", "Show list of commands"},
     };
 }
 
@@ -121,10 +121,12 @@ bool Server::RecvFromClient(ClientData *_clientData, char *buffer, size_t buffer
     std::cout << "bytes: " << bytes << std::endl;
     if (bytes < 0)
     {
+        // Client most likely disconnected
         return false;
     }
     else if (bytes == 0)
     {
+        // Some other error, just disconnect if you can
         return false;
     }
     else
@@ -141,7 +143,9 @@ bool Server::RecvFromClient(ClientData *_clientData, char *buffer, size_t buffer
     }
 }
 
-std::string Server::trim(const std::string& s) {
+std::string Server::trim(const std::string &s)
+{
+    // Removes trailing and preceding whitespace from a string
     size_t start = s.find_first_not_of(" \r\n\t");
     size_t end = s.find_last_not_of(" \r\n\t");
     return (start == std::string::npos) ? "" : s.substr(start, end - start + 1);
@@ -150,8 +154,10 @@ std::string Server::trim(const std::string& s) {
 bool Server::isCommand(std::string input)
 {
     input = trim(input);
-    for (auto it = commandsList.begin(); it != commandsList.end(); ++it) {
-        if (input.rfind(it->name, 0) == 0) {
+    for (auto it = commandsList.begin(); it != commandsList.end(); ++it)
+    {
+        if (input.rfind(it->name, 0) == 0)
+        {
             return true;
         }
     }
@@ -160,12 +166,14 @@ bool Server::isCommand(std::string input)
 
 void Server::listUsers(std::shared_ptr<ClientData> client)
 {
+    std::string message = "";
     for (auto it = clientData.begin(); it != clientData.end(); ++it)
     {
         size_t index = std::distance(clientData.begin(), it);
-        std::string out = "[" + std::to_string(index + 1) + "] " + it->get()->username + "\n";
-        Send(client->socket, out.c_str());
+        std::string out = "[" + std::to_string(index + 1) + "] " + (*it)->username + '\n';
+        message += out;
     }
+    Send(client->socket, message);
 }
 
 void Server::selectUser(std::shared_ptr<ClientData> client, const std::string &input)
@@ -179,16 +187,17 @@ void Server::quitChat(std::shared_ptr<ClientData> client)
 void Server::helpCommands(std::shared_ptr<ClientData> client)
 {
     std::string msg = "";
-    for (auto it = commandsList.begin(); it != commandsList.end(); ++it) {
+    for (auto it = commandsList.begin(); it != commandsList.end(); ++it)
+    {
         msg += it->name + " - " + it->description + "\n";
     }
-    Send(client->socket, msg.c_str());
+    Send(client->socket, msg);
 }
 
 void Server::handleCommand(std::shared_ptr<ClientData> client, const std::string &input)
 {
     /* could add function pointers to the commands list, but really i think its
-     more clear to just keep adding these manually to both the commands list and 
+     more clear to just keep adding these manually to both the commands list and
      here and write custom functions maybe?
     */
     if (input.rfind("LIST", 0) == 0)
@@ -215,10 +224,25 @@ void Server::handleCommand(std::shared_ptr<ClientData> client, const std::string
 
 void Server::handleConnection(std::shared_ptr<ClientData> _clientData)
 {
-    Send(_clientData->socket, "Welcome to EchoNet! Type HELP for a list of COMMANDS.\n");
-    while (true)
+    bool selected = false;
+    Send(_clientData->socket, "Welcome to EchoNet! Enter your username:\n");
+    while (!selected)
     {
-        // input before for text from client
+        std::string buffer(256, '\0');
+        bool noError = RecvFromClient(_clientData.get(), &buffer[0], buffer.size());
+        if (!noError)
+        {
+            break;
+        }
+        std::string message = trim(buffer);
+        _clientData.get()->username = message;
+        selected = true;
+    }
+
+    Send(_clientData->socket, "Welcome to EchoNet! Type HELP for a list of COMMANDS.\n");
+    while (selected)
+    {
+        // input text from client
         std::string buffer(256, '\0');
         bool noError = RecvFromClient(_clientData.get(), &buffer[0], buffer.size());
         if (!noError)
@@ -236,7 +260,7 @@ void Server::handleConnection(std::shared_ptr<ClientData> _clientData)
         }
         /*
             Temp testing
-        */
+        
         const char *msgs[] = {"yes", "no", "maybe", "definitely", "possibly", "perhaps", "impossible", "certainly"};
 
         size_t size_msgs = sizeof(msgs) / sizeof(msgs[0]);
@@ -244,6 +268,7 @@ void Server::handleConnection(std::shared_ptr<ClientData> _clientData)
         std::string msg = msgs[time % size_msgs];
         msg += "\n";
         Send(_clientData->socket, msg.c_str());
+        */
     }
 
     // free socket, and remove itself from the main vector

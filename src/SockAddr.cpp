@@ -18,9 +18,9 @@ SockAddr::~SockAddr()
     closesocket(sockfd);
 }
 
-int SockAddr::Send(SOCKET to, const char *msg)
+int SockAddr::Send(SOCKET to, const std::string& msg)
 {
-    return send(to, msg, strlen(msg), 0);
+    return send(to, msg.c_str(), msg.size(), 0) == msg.size();
 }
 
 int SockAddr::Recv(SOCKET socket, char *out, size_t buf_size)
