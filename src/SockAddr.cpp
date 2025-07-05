@@ -3,14 +3,14 @@
 #include <iostream>
 #include "NetSocket.hpp"
 
-SockAddr::SockAddr() : SockAddr(55555, "192.168.1.199") {}
+SockAddr::SockAddr() : SockAddr(55555, "0.0.0.0") {}
 
 SockAddr::SockAddr(int port, const char *ip_addr)
 {
     sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = inet_addr(ip_addr);
+    addr.sin_addr.s_addr = INADDR_ANY; // to accpet connections from all devices
 }
 
 SockAddr::~SockAddr()
