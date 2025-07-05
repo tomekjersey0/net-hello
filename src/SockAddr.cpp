@@ -3,7 +3,7 @@
 #include <iostream>
 #include "NetSocket.hpp"
 
-SockAddr::SockAddr() : SockAddr(55555, "0.0.0.0") {}
+SockAddr::SockAddr() : SockAddr(55555, "192.168.1.199") {}
 
 SockAddr::SockAddr(int port, const char *ip_addr)
 {
