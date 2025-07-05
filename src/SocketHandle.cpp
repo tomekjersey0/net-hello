@@ -2,7 +2,7 @@
 #include <cstring>
 #include <iostream>
 
-SocketHandle::SocketHandle() : SocketHandle(55555, "192.168.1.199") {}
+SocketHandle::SocketHandle() : SocketHandle(55555, "127.0.0.1") {}
 
 SocketHandle::SocketHandle(int port, const char* ip_addr)
 {
