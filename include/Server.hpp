@@ -54,5 +54,5 @@ public:
 
     void Listen();
 
-    SOCKET Accept(ClientData *clientData);
+    Net::socket_t Accept(ClientData *clientData);
 };
