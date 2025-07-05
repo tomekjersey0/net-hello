@@ -73,7 +73,7 @@ Client::~Client()
 
 void Client::Connect()
 {
-    if (connect(sockfd, (const sockaddr *)&addr, sizeof(addr)) == SOCKET_ERROR)
+    if (connect(sockfd, (const sockaddr *)&addr, sizeof(addr)) == Net::SOCKET_ERROR_VALUE)
     {
         std::cerr << Net::NetError::lastErrorMessage() << std::endl;
         return;

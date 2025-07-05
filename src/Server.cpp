@@ -8,7 +8,7 @@
 
 void Server::Start()
 {
-    if (Bind() == SOCKET_ERROR)
+    if (Bind() == Net::SOCKET_ERROR_VALUE)
     {
         std::cerr << "Bind failed with error: " << Net::NetError::lastErrorMessage() << std::endl;
         return;
@@ -21,7 +21,7 @@ void Server::Start()
         auto client = std::make_shared<ClientData>();
 
         Net::socket_t clientSock = Accept(client.get());
-        if (clientSock == INVALID_SOCKET)
+        if (clientSock == Net::INVALID_SOCKET_VALUE)
         {
             std::cerr << "Accept failed: " << Net::NetError::lastErrorMessage() << std::endl;
             continue;
@@ -85,7 +85,7 @@ Net::socket_t Server::Accept(ClientData *clientData)
     while (true)
     {
         clientSocket = accept(sockfd, (sockaddr *)&clientData->client_addr, &client_len);
-        if (clientSocket != INVALID_SOCKET)
+        if (clientSocket != Net::INVALID_SOCKET_VALUE)
         {
             // init other no-val members
             clientData->chattingWith = nullptr;
@@ -96,16 +96,17 @@ Net::socket_t Server::Accept(ClientData *clientData)
         int err = Net::NetError::lastError();
 
         // Handle specific errors (example)
-        if (err == WSAEINTR || err == WSAEWOULDBLOCK)
+        int err = Net::NetError::lastError();
+        if (Net::isRecoverableError(err))
         {
-            Sleep(100); // wait 100 ms before retrying
+            Net::sleep_ms(100);
             continue;
         }
 
         // For other errors, log and decide what to do
         std::cerr << "accept() failed with error: " << err << std::endl;
-        // You could exit, throw, or return INVALID_SOCKET here
-        return INVALID_SOCKET;
+        // You could exit, throw, or return Net::INVALID_SOCKET_VALUE here
+        return Net::INVALID_SOCKET_VALUE;
     }
 
     clientData->socket = clientSocket;

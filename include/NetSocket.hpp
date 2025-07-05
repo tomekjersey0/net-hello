@@ -131,6 +131,26 @@ namespace Net
 #endif
     }
 
+    // Sleep for the specified number of milliseconds
+    inline void sleep_ms(unsigned int milliseconds)
+    {
+#ifdef _WIN32
+        Sleep(milliseconds); // Windows Sleep uses milliseconds
+#else
+        // POSIX: use nanosleep for higher precision, or usleep (deprecated)
+        std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+#endif
+    }
+
+    inline bool isRecoverableError(int err)
+    {
+#ifdef _WIN32
+        return err == WSAEINTR || err == WSAEWOULDBLOCK;
+#else
+        return err == EINTR || err == EAGAIN || err == EWOULDBLOCK;
+#endif
+    }
+
     // --- Non-blocking mode example ---
     inline int setNonBlocking(socket_t s, bool nonBlocking)
     {
