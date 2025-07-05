@@ -4,6 +4,7 @@
 #include <thread>
 #include <mutex>
 #include <iterator>
+#include <algorithm>
 #include "NetSocket.hpp"
 
 void Server::Start()
@@ -168,7 +169,11 @@ void Server::listUsers(std::shared_ptr<ClientData> client)
     for (auto it = clientData.begin(); it != clientData.end(); ++it)
     {
         size_t index = std::distance(clientData.begin(), it);
-        std::string out = "[" + std::to_string(index + 1) + "] " + (*it)->username + '\n';
+        std::string out = "[" + std::to_string(index + 1) + "] ";
+        if ((*it)->username == client.get()->username) {
+            out += "(You)";
+        }
+        out += (*it)->username + '\n';
         message += out;
     }
     Send(client->socket, message);
@@ -220,29 +225,35 @@ void Server::handleCommand(std::shared_ptr<ClientData> client, const std::string
     }
 }
 
-void Server::handleConnection(std::shared_ptr<ClientData> _clientData)
+void Server::handleConnection(std::shared_ptr<ClientData> client)
 {
     bool selected = false;
-    Send(_clientData->socket, "Welcome to EchoNet! Enter your username:\n");
+    Send(client->socket, "Welcome to EchoNet! Enter your username:\n");
     while (!selected)
     {
         std::string buffer(256, '\0');
-        bool noError = RecvFromClient(_clientData.get(), &buffer[0], buffer.size());
+        bool noError = RecvFromClient(client.get(), &buffer[0], buffer.size());
         if (!noError)
         {
             break;
         }
         std::string message = trim(buffer);
-        _clientData.get()->username = message;
+        // check if username already exists
+        bool exists = (std::find(clientData.begin(), clientData.end(), client) != clientData.end());
+        if (exists) {
+            Send(client->socket, "Username " + message + "already taken.\nEnter your username:\n");
+            continue;
+        }
+        client.get()->username = message;
         selected = true;
     }
 
-    Send(_clientData->socket, "Welcome to EchoNet! Type HELP for a list of COMMANDS.\n");
+    Send(client->socket, "Welcome to EchoNet! Type HELP for a list of COMMANDS.\n");
     while (selected)
     {
         // input text from client
         std::string buffer(256, '\0');
-        bool noError = RecvFromClient(_clientData.get(), &buffer[0], buffer.size());
+        bool noError = RecvFromClient(client.get(), &buffer[0], buffer.size());
         if (!noError)
         {
             break;
@@ -250,7 +261,7 @@ void Server::handleConnection(std::shared_ptr<ClientData> _clientData)
         if (isCommand(buffer))
         {
             std::cout << "yep command here" << std::endl;
-            handleCommand(_clientData, buffer);
+            handleCommand(client, buffer);
         }
         else
         {
@@ -274,9 +285,9 @@ void Server::handleConnection(std::shared_ptr<ClientData> _clientData)
         std::lock_guard<std::mutex> lock(clientDataMutex);
         for (auto it = this->clientData.begin(); it != this->clientData.end(); ++it)
         {
-            if (*it == _clientData)
+            if (*it == client)
             {
-                Net::closeSocket(_clientData->socket);
+                Net::closeSocket(client->socket);
                 this->clientData.erase(it);
                 break;
             }
