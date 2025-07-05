@@ -80,7 +80,7 @@ void Server::Listen()
 
 Net::socket_t Server::Accept(ClientData *clientData)
 {
-    int client_len = sizeof(clientData->client_addr);
+    Net::socklen_t client_len = sizeof(clientData->client_addr);
     Net::socket_t clientSocket;
     while (true)
     {
