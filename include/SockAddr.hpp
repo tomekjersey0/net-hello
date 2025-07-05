@@ -1,6 +1,5 @@
 #pragma once
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include "NetSocket.hpp"
 #include <string>
 
 class SockAddr
@@ -10,7 +9,7 @@ protected:
     // this default configuration is set in the default constructor delegation for SockAddr
     // all classes using / connecting to the server socket should extend this class
     struct sockaddr_in addr;
-    SOCKET sockfd;
+    Net::socket_t sockfd;
 
 public:
     SockAddr();
@@ -19,7 +18,7 @@ public:
 
     ~SockAddr();
 
-    int Send(SOCKET to, const std::string& msg);
+    int Send(Net::socket_t to, const std::string& msg);
 
-    int Recv(SOCKET socket, char* out, size_t buf_size);
+    int Recv(Net::socket_t socket, char* out, size_t buf_size);
 };

@@ -6,12 +6,13 @@
 #include <mutex>
 #include <iterator>
 #include "GetError.hpp"
+#include "NetSocket.hpp"
 
 void Server::Start()
 {
     if (Bind() == SOCKET_ERROR)
     {
-        std::cerr << "Bind failed with error: " << WSAGetLastError() << std::endl;
+        std::cerr << "Bind failed with error: " << Net::getLastError() << std::endl;
         return;
     }
 
@@ -21,10 +22,10 @@ void Server::Start()
     {
         auto client = std::make_shared<ClientData>();
 
-        SOCKET clientSock = Accept(client.get());
+        Net::socket_t clientSock = Accept(client.get());
         if (clientSock == INVALID_SOCKET)
         {
-            std::cerr << "Accept failed: " << WSAGetLastError() << std::endl;
+            std::cerr << "Accept failed: " << Net::getLastError() << std::endl;
             continue;
         }
 
@@ -82,7 +83,7 @@ void Server::Listen()
 SOCKET Server::Accept(ClientData *clientData)
 {
     int client_len = sizeof(clientData->client_addr);
-    SOCKET clientSocket;
+    Net::socket_t clientSocket;
     while (true)
     {
         clientSocket = accept(sockfd, (sockaddr *)&clientData->client_addr, &client_len);
@@ -94,7 +95,7 @@ SOCKET Server::Accept(ClientData *clientData)
             break; // success
         }
 
-        int err = WSAGetLastError();
+        int err = Net::getLastError();
 
         // Handle specific errors (example)
         if (err == WSAEINTR || err == WSAEWOULDBLOCK)
@@ -116,7 +117,7 @@ SOCKET Server::Accept(ClientData *clientData)
 
 bool Server::RecvFromClient(ClientData *_clientData, char *buffer, size_t buffer_size)
 {
-    SOCKET socket = _clientData->socket;
+    Net::socket_t socket = _clientData->socket;
     int bytes = Recv(socket, buffer, buffer_size);
     std::cout << "bytes: " << bytes << std::endl;
     if (bytes < 0)
@@ -259,8 +260,8 @@ void Server::handleConnection(std::shared_ptr<ClientData> _clientData)
             std::cout << "NOO command.. " << buffer << std::endl;
         }
         /*
-            Temp testing
-        
+            Temp testing aka 8 ball game
+
         const char *msgs[] = {"yes", "no", "maybe", "definitely", "possibly", "perhaps", "impossible", "certainly"};
 
         size_t size_msgs = sizeof(msgs) / sizeof(msgs[0]);
@@ -288,17 +289,15 @@ void Server::handleConnection(std::shared_ptr<ClientData> _clientData)
 
 int main()
 {
-    WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+    if (!Net::startup())
     {
-        std::cerr << "WSAStartup failed\n";
+        std::cerr << "Network init failed\n";
         return 1;
     }
 
     Server server;
-
     server.Start();
 
-    WSACleanup();
+    Net::cleanup();
     return 0;
 }

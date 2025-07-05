@@ -2,6 +2,7 @@
 #include <cstring>
 #include <iostream>
 #include "GetError.hpp"
+#include "NetSocket.hpp"
 
 SockAddr::SockAddr() : SockAddr(55555, "127.0.0.1") {}
 
@@ -18,21 +19,21 @@ SockAddr::~SockAddr()
     closesocket(sockfd);
 }
 
-int SockAddr::Send(SOCKET to, const std::string& msg)
+int SockAddr::Send(Net::socket_t to, const std::string& msg)
 {
     return send(to, msg.c_str(), msg.size(), 0) == msg.size();
 }
 
-int SockAddr::Recv(SOCKET socket, char *out, size_t buf_size)
+int SockAddr::Recv(Net::socket_t socket, char *out, size_t buf_size)
 {
     int bytes = recv(socket, out, buf_size, 0);
     if (bytes == 0)
     {
-        std::cout << GetError::getFullMessage(WSAGetLastError()) << std::endl;
+        std::cout << GetError::getFullMessage(Net::getLastError()) << std::endl;
     }
     else if (bytes < 0)
     {
-        std::cout << GetError::getFullMessage(WSAGetLastError()) << std::endl;
+        std::cout << GetError::getFullMessage(Net::getLastError()) << std::endl;
     }
     else
     {

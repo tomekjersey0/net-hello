@@ -4,13 +4,14 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include "NetSocket.hpp"
 
 class Server : public SockAddr
 {
 private:
     struct ClientData
     {
-        SOCKET socket;
+        Net::socket_t socket;
         sockaddr_in client_addr;
         std::string username;
         std::shared_ptr<ClientData> chattingWith;

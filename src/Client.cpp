@@ -1,8 +1,9 @@
-#include "../include/Client.hpp"
+#include "Client.hpp"
 #include <iostream>
 #include <string>
 #include <thread>
 #include "GetError.hpp"
+#include "NetSocket.hpp"
 
 void Client::handleUserInput()
 {
@@ -17,7 +18,7 @@ void Client::handleUserInput()
         {
             running = false;
             // closes the socket completly, preventing the Recv in handleRecv from blocking and stalling exit
-            shutdown(sockfd, SD_BOTH);
+            shutdown(sockfd, Net::SHUTDOWN_BOTH);
             break;
         }
 
@@ -34,7 +35,7 @@ void Client::handleRecv()
         int bytes = Recv(sockfd, &buffer[0], buffer.size());
         if (bytes <= 0)
         {
-            std::cerr << GetError::getFullMessage(WSAGetLastError()) << std::endl;
+            std::cerr << GetError::getFullMessage(Net::getLastError()) << std::endl;
             std::cerr << "bytes: " << bytes << std::endl;
             break;
         }
@@ -75,24 +76,22 @@ void Client::Connect()
 {
     if (connect(sockfd, (const sockaddr *)&addr, sizeof(addr)) == SOCKET_ERROR)
     {
-        std::cerr << GetError::getFullMessage(WSAGetLastError()) << std::endl;
+        std::cerr << GetError::getFullMessage(Net::getLastError()) << std::endl;
         return;
     }
 }
 
 int main()
 {
-    WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+    if (!Net::startup())
     {
-        std::cerr << "WSAStartup failed\n";
+        std::cerr << "Network init failed\n";
         return 1;
     }
 
     Client client;
-
     client.Start();
 
-    WSACleanup();
+    Net::cleanup();
     return 0;
 }
