@@ -1,6 +1,5 @@
 #include "../include/Server.hpp"
 #include <iostream>
-#include <windows.h>
 #include <cstdint>
 #include <thread>
 #include <mutex>
