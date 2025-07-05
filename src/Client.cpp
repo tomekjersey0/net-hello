@@ -63,7 +63,7 @@ void Client::Start()
 Client::~Client()
 {
     running = false;
-    closesocket(sockfd);
+    Net::closeSocket(sockfd);
 
     // in case user forgets to run Start, prevents memory leaks from the threads on close
     if (inputThread.joinable())

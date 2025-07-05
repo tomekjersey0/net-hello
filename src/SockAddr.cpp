@@ -16,7 +16,7 @@ SockAddr::SockAddr(int port, const char *ip_addr)
 
 SockAddr::~SockAddr()
 {
-    closesocket(sockfd);
+    Net::closeSocket(sockfd);
 }
 
 int SockAddr::Send(Net::socket_t to, const std::string& msg)

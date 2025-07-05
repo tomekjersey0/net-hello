@@ -55,7 +55,7 @@ Server::~Server()
 {
     for (std::shared_ptr<ClientData> client : clientData)
     {
-        closesocket(client->socket);
+        Net::closeSocket(client->socket);
     }
 }
 
@@ -279,7 +279,7 @@ void Server::handleConnection(std::shared_ptr<ClientData> _clientData)
         {
             if (*it == _clientData)
             {
-                closesocket(_clientData->socket);
+                Net::closeSocket(_clientData->socket);
                 this->clientData.erase(it);
                 break;
             }
