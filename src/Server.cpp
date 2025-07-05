@@ -40,7 +40,7 @@ void Server::Start()
     }
 }
 
-Server::Server()
+Server::Server() : SocketHandle(55555, "0.0.0.0")
 {
     commandsList = {
         {"LIST", "Print who is actively online"},
@@ -169,11 +169,11 @@ void Server::listUsers(std::shared_ptr<ClientData> client)
     for (auto it = clientData.begin(); it != clientData.end(); ++it)
     {
         size_t index = std::distance(clientData.begin(), it);
-        std::string out = "[" + std::to_string(index + 1) + "] ";
-        if ((*it)->username == client.get()->username) {
-            out += "(You)";
+        std::string out = "[" + std::to_string(index + 1) + "] " + (*it)->username;
+        if ((*it)->username == client.get()->username)
+        {
+            out += " (You)\n";
         }
-        out += (*it)->username + '\n';
         message += out;
     }
     Send(client->socket, message);
@@ -227,6 +227,9 @@ void Server::handleCommand(std::shared_ptr<ClientData> client, const std::string
 
 void Server::handleConnection(std::shared_ptr<ClientData> client)
 {
+    std::mutex addUserMutex;
+    addUserMutex.lock();
+
     bool selected = false;
     Send(client->socket, "Welcome to EchoNet! Enter your username:\n");
     while (!selected)
@@ -239,14 +242,19 @@ void Server::handleConnection(std::shared_ptr<ClientData> client)
         }
         std::string message = trim(buffer);
         // check if username already exists
-        bool exists = (std::find(clientData.begin(), clientData.end(), client) != clientData.end());
-        if (exists) {
+        bool exists = std::any_of(clientData.begin(), clientData.end(), [&](const std::shared_ptr<ClientData> &c)
+            { return c->username == message; });
+
+        if (exists)
+        {
             Send(client->socket, "Username " + message + "already taken.\nEnter your username:\n");
             continue;
         }
         client.get()->username = message;
         selected = true;
     }
+
+    addUserMutex.unlock();
 
     Send(client->socket, "Welcome to EchoNet! Type HELP for a list of COMMANDS.\n");
     while (selected)

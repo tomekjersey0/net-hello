@@ -30,7 +30,7 @@ else
 endif
 
 # Object files
-SOCKADDR_OBJ = $(BUILD_DIR)/SockAddr.o
+SOCKADDR_OBJ = $(BUILD_DIR)/SocketHandle.o
 GETERROR_OBJ = $(BUILD_DIR)/GetError.o
 SERVER_OBJ = $(BUILD_DIR)/Server.o
 CLIENT_OBJ = $(BUILD_DIR)/Client.o
@@ -45,7 +45,7 @@ $(BUILD_DIR):
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
-$(SOCKADDR_OBJ): $(SRC_DIR)/SockAddr.cpp | $(BUILD_DIR)
+$(SOCKADDR_OBJ): $(SRC_DIR)/SocketHandle.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(DEFINES) $< -o $@
 
 $(GETERROR_OBJ): $(SRC_DIR)/GetError.cpp | $(BUILD_DIR)

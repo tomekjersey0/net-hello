@@ -1,9 +1,9 @@
 #pragma once
-#include "SockAddr.hpp"
+#include "SocketHandle.hpp"
 #include <thread>
 #include <atomic>
 
-class Client : public SockAddr
+class Client : public SocketHandle
 {
 private:
     std::atomic<bool> running{true};

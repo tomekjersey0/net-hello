@@ -1,12 +1,12 @@
 #pragma once
-#include "SockAddr.hpp"
+#include "SocketHandle.hpp"
 #include <vector>
 #include <memory>
 #include <mutex>
 #include <string>
 #include "NetSocket.hpp"
 
-class Server : public SockAddr
+class Server : public SocketHandle
 {
 private:
     struct ClientData
