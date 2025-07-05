@@ -93,8 +93,6 @@ Net::socket_t Server::Accept(ClientData *clientData)
             break; // success
         }
 
-        int err = Net::NetError::lastError();
-
         // Handle specific errors (example)
         int err = Net::NetError::lastError();
         if (Net::isRecoverableError(err))

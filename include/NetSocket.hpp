@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstring>
 #include <string>
+#include <thread>
 
 // Platform-specific includes
 #ifdef _WIN32
