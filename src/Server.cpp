@@ -4,14 +4,13 @@
 #include <thread>
 #include <mutex>
 #include <iterator>
-#include "GetError.hpp"
 #include "NetSocket.hpp"
 
 void Server::Start()
 {
     if (Bind() == SOCKET_ERROR)
     {
-        std::cerr << "Bind failed with error: " << Net::getLastError() << std::endl;
+        std::cerr << "Bind failed with error: " << Net::NetError::lastErrorMessage() << std::endl;
         return;
     }
 
@@ -24,7 +23,7 @@ void Server::Start()
         Net::socket_t clientSock = Accept(client.get());
         if (clientSock == INVALID_SOCKET)
         {
-            std::cerr << "Accept failed: " << Net::getLastError() << std::endl;
+            std::cerr << "Accept failed: " << Net::NetError::lastErrorMessage() << std::endl;
             continue;
         }
 
@@ -94,7 +93,7 @@ Net::socket_t Server::Accept(ClientData *clientData)
             break; // success
         }
 
-        int err = Net::getLastError();
+        int err = Net::NetError::lastError();
 
         // Handle specific errors (example)
         if (err == WSAEINTR || err == WSAEWOULDBLOCK)

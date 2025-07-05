@@ -1,5 +1,11 @@
 #include "GetError.hpp"
 
+/*
+
+    The Winsock implemenation of this class
+    POSIX implementations can be found the in Net::NetError class ("NetSocket.hpp")
+*/
+
 std::map<int, GetError::Error> GetError::errors = {
     {10004, {10004, "WSAEINTR", "Interrupted function call"}},
     {10009, {10009, "WSAEBADF", "Bad file number"}},

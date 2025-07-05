@@ -1,7 +1,6 @@
 #include "SockAddr.hpp"
 #include <cstring>
 #include <iostream>
-#include "GetError.hpp"
 #include "NetSocket.hpp"
 
 SockAddr::SockAddr() : SockAddr(55555, "127.0.0.1") {}
@@ -29,11 +28,11 @@ int SockAddr::Recv(Net::socket_t socket, char *out, size_t buf_size)
     int bytes = recv(socket, out, buf_size, 0);
     if (bytes == 0)
     {
-        std::cout << GetError::getFullMessage(Net::getLastError()) << std::endl;
+        std::cout << Net::NetError::lastErrorMessage() << std::endl;
     }
     else if (bytes < 0)
     {
-        std::cout << GetError::getFullMessage(Net::getLastError()) << std::endl;
+        std::cout << Net::NetError::lastErrorMessage() << std::endl;
     }
     else
     {

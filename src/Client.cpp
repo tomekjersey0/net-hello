@@ -2,7 +2,6 @@
 #include <iostream>
 #include <string>
 #include <thread>
-#include "GetError.hpp"
 #include "NetSocket.hpp"
 
 void Client::handleUserInput()
@@ -35,7 +34,7 @@ void Client::handleRecv()
         int bytes = Recv(sockfd, &buffer[0], buffer.size());
         if (bytes <= 0)
         {
-            std::cerr << GetError::getFullMessage(Net::getLastError()) << std::endl;
+            std::cerr << Net::NetError::lastErrorMessage() << std::endl;
             std::cerr << "bytes: " << bytes << std::endl;
             break;
         }
@@ -76,7 +75,7 @@ void Client::Connect()
 {
     if (connect(sockfd, (const sockaddr *)&addr, sizeof(addr)) == SOCKET_ERROR)
     {
-        std::cerr << GetError::getFullMessage(Net::getLastError()) << std::endl;
+        std::cerr << Net::NetError::lastErrorMessage() << std::endl;
         return;
     }
 }
